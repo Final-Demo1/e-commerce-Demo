@@ -1,12 +1,14 @@
 import express from 'express';
+import 'dotenv/config';
 import productsRouter from './routes/products.js';
 import mongoose from 'mongoose';
-import userRouter from './routes/users.js';
+import cors from "cors";
+import userRouter from './routes/user.js';
 import isAuthenticated from './middlewares/auth.js';
 
 
 //Make database connection
-await mongoose.connect(process.env.MONGO_URL);
+const database = await mongoose.connect(process.env.MONGO_URI);
 
 
 //create an express app

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAuthenticateUser, loginUser, registerUser, updateUser } from "../controllers/user.js";
+import { getAuthenticatedUser, loginUser, registerUser, updateUser } from "../controllers/user.js";
 import isAuthenticated from "../middlewares/auth.js";
 
 
@@ -14,7 +14,7 @@ userRouter.post('/users/login', loginUser);
 
 userRouter.patch('/users/:id',updateUser);
 
-userRouter.get('/users/me', isAuthenticated ,getAuthenticateUser);
+userRouter.get('/users/me', isAuthenticated ,getAuthenticatedUser);
 
 //Export router
 export default userRouter;
