@@ -30,7 +30,7 @@ app.use("/api/v1", productsRouter);
 app.use( "/api/v1", userRouter)
 
 //listen for incoming request
-const port= process.env.PORT || 3008;
-app.listen(3008, () => {
+const port= process.env.PORT || 3020;
+app.listen(3020, () => {
     console.log (`server is listening on port ${port}`);
 });
