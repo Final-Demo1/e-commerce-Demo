@@ -2,14 +2,21 @@ import express from 'express';
 import 'dotenv/config';
 import productsRouter from './routes/products.js';
 import mongoose from 'mongoose';
-import cors from "cors";
+// import cors from "cors";
 import userRouter from './routes/user.js';
-import isAuthenticated from './middlewares/auth.js';
+
 
 
 //Make database connection
-const database = await mongoose.connect(process.env.MONGO_URI);
-
+const connectionString = process.env.MONGO_URI;
+mongoose
+  .connect(connectionString)
+  .then(() => {
+    console.log("database connected");
+  })
+  .catch((err) => {
+    console, log(err);
+  });
 
 //create an express app
 const app = express();
@@ -19,8 +26,8 @@ app.use(express.json());
 
 
 // use routes
-app.use( productsRouter);
-app.use(userRouter)
+app.use("/api/v1", productsRouter);
+app.use( "/api/v1", userRouter)
 
 //listen for incoming request
 const port= process.env.PORT || 3008;
