@@ -1,80 +1,127 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { mailTransporter, registerUserMailTemplate } from "../utils/mail.js";
+import {sendEmailSignup, transporter} from "../utils/mail.js";
 import { loginUserValidator, registerUserValidator, updateUserValidator } from "../validators/user.js";
 import { UserModel } from "../models/user.js";
 
 export const registerUser = async (req, res, next ) => {
-    // validate user info
-    const { error, value } = registerUserValidator.validate(req.body);
-    if (error) {
-        return res.status(422).json(error);
+    try {
+        // validate user info
+        const { error, value } = registerUserValidator.validate(req.body);
+        if (error) {
+            return res.status(422).json({ error: error.details[0].message });
+        }
+
+        // Safely access email and username values
+        const normalizedEmail = value.email ? value.email.toLowerCase() : value.email;
+        const normalizedUserName = value.userName ? value.userName.toLowerCase() : value.userName;
+
+        // check if user doesn't already exist
+        const existingUser = await UserModel.findOne({
+            $or: [
+                { userName: normalizedUserName },
+                { email: normalizedEmail }
+            ]
+        });
+
+        if (existingUser) {
+            return res.status(409).json({ error: 'User already exists!' });
+        }
+
+        // hash plaintext password
+        const hashedPassword = bcrypt.hashSync(value.password, 10);
+        
+        // create user record in database
+        const newUser = await UserModel.create({
+            ...value,
+            email: normalizedEmail,
+            password: hashedPassword
+        });
+
+        // Generate token
+        const accessTokenSignup = jwt.sign(
+            { id: newUser._id },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "24h" }
+        );
+
+        // send registration email to user
+        try {
+            // Define a basic template if registerUserMailTemplate is undefined
+            const emailTemplate = `<p>Welcome, ${value.userName}! Your account has been created successfully.</p>`;
+            
+            await transporter.sendMail({
+                from: 'ibrah.webdev@gmail.com',
+                to: value.email,
+                subject: 'Registration Successful',
+                html: emailTemplate,
+            });
+        } catch (emailError) {
+            console.error("Error sending email:", emailError);
+            // Continue registration process even if email fails
+        }
+
+        // return response
+        return res.status(201).json({
+            message: "User created successfully!",
+            accessTokenSignup,
+        });
+    } catch (err) {
+        console.error("Registration error:", err);
+        return res.status(500).json({ error: "Registration failed. Please try again." });
     }
-    // check if user doesnt already exist
-    const user = await UserModel.findOne({
-        $or: [
-            { userName: value.userName},
-            { email: value.email}
-        ]
-    });
-    if (user) {
-        return res.status(409).json('user already exist!');
-    }
-    // hash plaintext password
-    const hashedPassword = bcrypt.hashSync(value.password, 10);
-    // create user record in database
-    const result = await UserModel.create({
-        ...value,
-        password: hashedPassword
-    });
-    // send registration email to user
-     mailTransporter.sendMail({
-        from: 'ibrah.webdev@gmail.com',
-        to: value.email,
-        subject: 'Checking out nodemailer',
-        html: registerUserMailTemplate.replace('{{userName}}', value.userName ),
-    })
-    // (optional) generate a token
-    // return response
-    res.status(201).json('user registered successfully');
 }
 
 export const loginUser = async (req, res, next) => {
-    // validate user information 
-    const { error, value } = loginUserValidator.validate(req.body);
-    if (error) {
-        return res.status(422).json(error);
-    }
-    // find matching user record 
-    const user = await UserModel.findOne({
-        $or: [
-            { userName: value.userName},
-            { email: value.email}
-        ]
-    });
-    if (!user) {
-        return res.status(404).json('user does not exist!');
-    }
-    // compare incoming password with saved password
-    const correctPassword = bcrypt.compareSync(value.password, user.password);
-    if (!correctPassword){
-        return res.status(401).json('Invalid credentials');
-    }
-    // Generate access token 
-    const accessToken = jwt.sign(
-       { id : user.id},
-        process.env.JWT_SECRET_KEY,
-            { expiresIn: '24h'}
-    );
-    // Return response
-    res.status(200).json({
-         accessToken,
-         user:{
-            role: user.role,
-            email: user.email
-         } 
+    try {
+        // Validate login info
+        const { error, value } = loginUserValidator.validate(req.body);
+        if (error) {
+            return res.status(422).json({ error: error.details[0].message });
+        }
+
+        // Find user by username or email
+        const user = await UserModel.findOne({
+            $or: [
+                { userName: value.userName },
+                { email: value.email }
+            ]
         });
-}
+
+        // Check if user exists
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Verify password
+        const isPasswordValid = bcrypt.compareSync(value.password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Generate JWT token
+        const accessToken = jwt.sign(
+            { id: user._id, role: user.role || 'buyer' },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "24h" }
+        );
+
+        // Return user data and token
+        return res.status(200).json({
+            message: "Login successful",
+            user: {
+                id: user._id,
+                userName: user.userName,
+                email: user.email,
+                role: user.role || 'buyer'
+            },
+            accessToken
+        });
+    } catch (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ error: "Login failed. Please try again." });
+    }
+};
 
 export const updateUser = async(req, res, next) => {
     //  Validate request body
