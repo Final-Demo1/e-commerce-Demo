@@ -10,7 +10,7 @@ const productShema = new Schema(
     quantity: { type: Number, required: true },
     category: { type: String, enum: ["cereals", "fresh milk"], required: true },
     pictures: [{ type: String, required: true }],
-    userId: { type: Types.ObjectId, requierd: true, ref: "User" },
+    userId: { type: Types.ObjectId, required: true, ref: "User" },
   },
   {
     timestamps: true,
