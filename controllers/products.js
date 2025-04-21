@@ -1,5 +1,6 @@
-import { productModel } from "../models/product.js";
-import { addProductValidator } from "../validators/products.js";
+import { productModel } from "../models/products.js";
+import { addProductValidator, replaceProductValidator } from "../validators/products.js";
+import mongoose from "mongoose";
 
 export const addProducts = async (req, res, next) => {
     try {
