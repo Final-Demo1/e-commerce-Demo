@@ -51,7 +51,7 @@ export const registerUser = async (req, res, next) => {
             const emailTemplate = `<p>Welcome, ${value.userName}! Your account has been created successfully.</p>`;
 
             await transporter.sendMail({
-                from: 'ibrah.webdev@gmail.com',
+                from: 'koloaidem@gmail.com',
                 to: value.email,
                 subject: 'Registration Successful',
                 html: emailTemplate,
@@ -158,7 +158,7 @@ export const getAuthenticatedUser = async (req, res, next) => {
     }
 }
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res,next) => {
     try {
         // Validate the request
         const { error, value } = forgotPasswordValidator.validate(req.body);
@@ -181,7 +181,7 @@ export const forgotPassword = async (req, res) => {
 
         // Save the reset token and expiry to the user document
         user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        user.resetPasswordExpires = Date.now() + 3600000; // 3hour
         await user.save();
 
         // Send password reset email
@@ -196,7 +196,7 @@ export const forgotPassword = async (req, res) => {
 
         try {
             await transporter.sendMail({
-                from: 'ibrah.webdev@gmail.com',
+                from: process.env.USER_EMAIL,
                 to: user.email,
                 subject: 'Password Reset Request',
                 html: emailTemplate,
@@ -207,6 +207,7 @@ export const forgotPassword = async (req, res) => {
             });
         } catch (emailError) {
             console.error("Error sending reset email:", emailError);
+            console.error("Detailed error info:", emailError.response || emailError);
             return res.status(500).json({ error: 'Failed to send reset email' });
         }
     } catch (error) {
@@ -254,7 +255,7 @@ export const resetPassword = async (req, res) => {
         // Send confirmation email
         try {
             await transporter.sendMail({
-                from: 'ibrah.webdev@gmail.com',
+                from: 'doulgueclemencekoloaide@mail.com',
                 to: user.email,
                 subject: 'Password Reset Successful',
                 html: `<p>Your password has been successfully reset. If you did not request this change, please contact support immediately.</p>`,

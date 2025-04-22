@@ -6,7 +6,7 @@ port: 587,
 secure: false,
 auth:{
     user: process.env.USER_EMAIL,
-    pass: process.env.USER_PASSWORD
+    pass: process.env.USER_PASSWORD,
 }
 
 });
@@ -57,7 +57,7 @@ export const sendEmailSignup = async (to, subject, userName, role) => {
   </head>
   <body>
       <div class="container">
-          <h1 class="header">Welcome ${userName}</h1>
+          <h1 class="header">Welcome ${clemence}</h1>
           <h1 class="header">Thank You for Signing Up!</h1>
           <p class="message">We're excited to have you as part of our community as a ${role}. We hope you have an amazing experience discovering and connecting through our Ecommerce page.</p>
           <p class="footer">If you have any questions, feel free to <a href="#">contact us</a>.</p>
