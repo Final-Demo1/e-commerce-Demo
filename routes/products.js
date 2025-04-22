@@ -1,34 +1,46 @@
 import { Router } from "express";
 import { addProducts, countProducts, deleteProducts, getProducts, replaceProduct, updateProducts } from "../controllers/products.js";
-import { localUpload, productImageUpload, productPicturesUpload, remoteUpload } from "../middlewares/upload.js";
+import { productPicturesUpload } from "../middlewares/upload.js";
 import { isAuthenticated, isAuthorized } from "../middlewares/auth.js";
 
-
-//create products router
+// Create products router
 const productsRouter = Router();
 
-//define routes
+// Define routes
 productsRouter.post(
     '/products',
     isAuthenticated,
-    isAuthorized(['superadmin','admin']),
+    isAuthorized(['superadmin', 'admin']),
     productPicturesUpload.array('pictures', 3),
     addProducts
 );
 
-
 productsRouter.get('/products', getProducts);
 
-productsRouter.get('/products/count', countProducts)
+productsRouter.get('/products/count', countProducts);
 
-productsRouter.patch('/products/:id', isAuthenticated, updateProducts),
-    productsRouter.put(
-        '/products/:id',
-        isAuthenticated,
-        productPicturesUpload.array('pictures', 3),
-        replaceProduct
-    );
-productsRouter.delete('/products/:id', isAuthenticated, deleteProducts);
+// Fix the syntax error - removed the comma and fixed the structure
+productsRouter.patch(
+    '/products/:id', 
+    isAuthenticated,
+    productPicturesUpload.array('pictures', 3),
+    updateProducts
+);
 
-//export the router
+productsRouter.put(
+    '/products/:id',
+    isAuthenticated,
+    isAuthorized(['superadmin', 'admin']), // Added authorization check for consistency
+    productPicturesUpload.array('pictures', 3),
+    replaceProduct
+);
+
+productsRouter.delete(
+    '/products/:id', 
+    isAuthenticated,
+    isAuthorized(['superadmin', 'admin']), // Added authorization check for consistency
+    deleteProducts
+);
+
+// Export the router
 export default productsRouter;
